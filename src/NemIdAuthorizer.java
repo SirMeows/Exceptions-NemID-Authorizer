@@ -15,26 +15,46 @@ Tilladte specialtegn er: { } ! # " $ ’ % ^ & , * ( ) _ + - = : ; ? . og @.*/
 public class NemIdAuthorizer {
 
     public boolean isValidCpr(String cpr) {
-        // should also check that it's numbers only
-        if(!(cpr.length() == 10)) {
-            throw new InputMismatchException("invalid user name or password <<userName>>");
+        if(cpr.length() == 10 && hasOnlyNumbers(cpr)) {
+            return true;
         }
-        return true;
+        throw new InputMismatchException("invalid user name or password <<userName>>");
+    }
+
+    private boolean hasOnlyNumbers(String cpr) {
+        if(cpr.matches("^[0-9]*$")) {
+            return true;
+        }
+        return false;
     }
 
     public boolean isValidPassword(String cpr, String pw) {
         var lengthOK = isCorrectLength(pw);
-        var charOK = hasLegalCharacters(pw);
+        var alphaNumOK = containsRequiredCharacters(pw);
+        var noIllegalCh = hasNoIllegalCharacters(pw);
         var noSpace = hasNoSpaceAtStartOrEnd(pw);
         var noQuadruple = noSequenceOfFourIdenticalCharacters(pw);
         var noCpr = containsNoCpr(cpr, pw);
 
-        if (lengthOK && charOK && noSpace && noQuadruple && noCpr) {
+        if (lengthOK && alphaNumOK && noIllegalCh && noSpace && noQuadruple && noCpr) {
             return true;
         }
-
         throw new InputMismatchException("invalid password" + pwRequirementMessage());
+    }
 
+    private boolean hasNoIllegalCharacters(String pw) {
+        var allowed = "[a-zA-Z09" + geAllowedSpecialCharacters() + "]";
+        var pattern = Pattern.compile(allowed);
+        var matcher = pattern.matcher(pw);
+        var illegal = matcher.replaceAll("");
+        if(illegal.length() > 0) {
+            return false;
+        }
+        return true;
+    }
+
+    private boolean containsRequiredCharacters(String pw) {
+        return pw.contains("[a-zA-Z09]");
     }
 
     private boolean containsNoCpr(String cpr, String pw) {
@@ -53,25 +73,9 @@ public class NemIdAuthorizer {
     }
 
     private boolean hasNoSpaceAtStartOrEnd(String pw) {
- /*       var first = pw.charAt(0);
-        var last = pw.charAt(pw.length() -1);
-        return first != ' ' && last != ' ';*/
         return !pw.startsWith(" ") || !pw.endsWith(" ");
     }
-
-    private boolean hasLegalCharacters(String pw) {
-        var nrs = "[0-9]"; // or \\d+ ?
-        var letters = "[a-zA-Z]";
-        var nordics = "[^æøå]";
-        //var specialString = Pattern.quote("{ } ! # \" $ ’ % ^ & , * ( ) _ + - = : ; ? . @");
-        // \W are non-word characters. They can ALL be escaped (not just reserved specials)
-        var allowedSpecial = geAllowedSpecialCharacters();
-        var pattern = Pattern.compile(nrs+letters+nordics+allowedSpecial);
-        var matcher = pattern.matcher(pw);
-
-        return matcher.matches();
-    }
-
+    // does this need to return plain String or regex w/backslashes?
     private String geAllowedSpecialCharacters() {
         var specialString = "{ } ! # \" $ ’ % ^ & , * ( ) _ + - = : ; ? . @";
         return specialString.replaceAll("[\\W]", "\\\\$0");
