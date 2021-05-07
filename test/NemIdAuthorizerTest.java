@@ -31,14 +31,15 @@ class NemIdAuthorizerTest {
     @Test
     void cprTooLong() {
         var cprLong = "112233445566778899";
-        Assertions.assertThrows(InputMismatchException.class, () -> classUnderTest.isValidCpr(cprLong) );
+        Assertions.assertThrows(InputMismatchException.class,
+                () -> classUnderTest.isValidCpr(cprLong) );
     }
 
     @Test
     void nonNrDigits() {
         var notJustNrs = "aabbccddee";
         Assertions.assertThrows(InputMismatchException.class, ()-> {
-            var result = classUnderTest.isValidCpr(notJustNrs);
+            classUnderTest.isValidCpr(notJustNrs);
         });
     }
 
